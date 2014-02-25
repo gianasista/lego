@@ -19,9 +19,9 @@ public class LineRunner
 	{
 		System.out.println("Programmstart");
 		//RegulatedMotor motorLeft = new EV3LargeRegulatedMotor(MotorPort.A);
-		RegulatedMotor motorLeft = Motor.B;
+		RegulatedMotor motorLeft = Motor.A;
 		//RegulatedMotor motorRight = new EV3LargeRegulatedMotor(MotorPort.B); 
-		RegulatedMotor motorRight = Motor.A;
+		RegulatedMotor motorRight = Motor.B;
 		motorLeft.resetTachoCount();
 		motorRight.resetTachoCount();
 		motorLeft.rotate(0);
@@ -65,7 +65,24 @@ public class LineRunner
 		motorLeft.forward();
 		motorRight.forward();
 		Thread.sleep(2000);
+		
+		System.out.println("L: 0 - R: 200");
+		motorLeft.setSpeed(0);
+		motorRight.setSpeed(200);
+		motorLeft.stop();
+		//motorLeft.forward();
+		motorRight.forward();
+		Thread.sleep(2000);
+		
+		System.out.println("L: 300 - R: 0");
+		motorLeft.setSpeed(300);
+		motorRight.setSpeed(0);
+		motorLeft.stop();
+		//motorLeft.forward();
+		motorRight.forward();
+		Thread.sleep(2000);
 		*/
+		
 		LineDetector lineDetector = new LineDetector(new EV3ColorSensor(SensorPort.S1));
 		lineDetector.setDaemon(true);
 		lineDetector.start();
@@ -77,31 +94,34 @@ public class LineRunner
 		
 		while(!Button.ESCAPE.isDown())
 		{
-			System.out.println("Next Round");
 			DetectionMode detectedMode = lineDetector.getDetectedMode();
 			
 			if (lastMode != detectedMode)
 			{
+				System.out.println("Changed Mode");
+				int speed = 100;
 				switch(detectedMode)
 				{
-				case BLACK: speedLeft =  0; speedRight =  100; System.out.println("\nBlack"); break;
-				case EDGE : speedLeft =  100; speedRight =  100; System.out.println("\nEdge");break;
-				case WHITE: speedLeft =  100; speedRight =  0; System.out.println("\nWhite");break;
+				case BLACK: speedLeft =  speed; speedRight =  0;     System.out.println("Black"); break;
+				case EDGE : speedLeft =  speed; speedRight =  speed; System.out.println("Edge");break;
+				case WHITE: speedLeft =  0;     speedRight =  speed; System.out.println("White");break;
 				default:    speedLeft =  10; speedRight =  10; break;
 				}
+				lastMode = detectedMode;
 				System.out.println(String.format("SpeedLeft: %d - SpeedRight: %d", speedLeft, speedRight));
+				
 				motorLeft.setSpeed(speedLeft);
 				motorRight.setSpeed(speedRight);
 				motorLeft.forward();
 				motorRight.forward();
 			}
 			try {
-				Thread.sleep(200);
+				Thread.sleep(150);
 				//motorLeft.stop();
 				//motorRight.stop();
 				//System.out.println("Motoren gestoppt... Warten 5 sek");
 				//Thread.sleep(1000);
-			} catch (InterruptedException e) {
+			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
@@ -159,17 +179,19 @@ class DriveRobot implements Behavior
 		{
 			switch(lineDetector.getDetectedMode())
 			{
-				case BLACK: speedLeft =  20; speedRight =  60; System.out.println("\nB"); break;
-				case EDGE : speedLeft =  60; speedRight =  60; System.out.println("\nE");break;
-				case WHITE: speedLeft =  60; speedRight =  20; System.out.println("\nW");break;
-				default:    speedLeft =  10; speedRight =  10; break;
+				case BLACK: speedLeft =  100; speedRight =  0;   System.out.println("\nB"); break;
+				case EDGE : speedLeft =  100; speedRight =  100; System.out.println("\nE");break;
+				case WHITE: speedLeft =  0;   speedRight =  100; System.out.println("\nW");break;
+				default:    speedLeft =  10;  speedRight =  10; break;
 			}
+			/*
 			motorLeft.setSpeed(speedLeft);
 			motorRight.setSpeed(speedRight);
 			motorLeft.forward();
 			motorRight.forward();
+			*/
 			try {
-				Thread.sleep(500);
+				Thread.sleep(200);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -207,7 +229,7 @@ class LineDetector extends Thread
 	private float lightValue;
 	
 	private static final float BLACK_VALUE = 0.04f;
-	private static final float WHITE_VALUE = 0.88f;
+	private static final float WHITE_VALUE = 0.61f;
 	
 	private float lowerEdgeThreshold;
 	private float upperEdgeThreshold;
@@ -220,7 +242,7 @@ class LineDetector extends Thread
 		this.sample = new float[sensorMode.sampleSize()];
 		
 		float middle = (WHITE_VALUE - BLACK_VALUE)/2f;
-		float border = (WHITE_VALUE - BLACK_VALUE)/6f; 
+		float border = (WHITE_VALUE - BLACK_VALUE)/8f; 
 		System.out.println(String.format("Middle: %f - Border: %f - Test: %f", middle, border, 0.02f));
 		this.lowerEdgeThreshold = middle - border;
 		this.upperEdgeThreshold = middle + border;
